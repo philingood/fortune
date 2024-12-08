@@ -79,4 +79,11 @@ async function spinWheel() {
     }, 16);
 }
 
+async function removeLastWinner() {
+    await fetch('/remove-winner', { method: 'POST' });
+    items = items.filter(item => item !== document.getElementById('result').innerText.split(': ')[1]);
+    drawWheel();
+    document.getElementById('result').innerText = '';
+}
+
 drawWheel();

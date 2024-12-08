@@ -12,8 +12,9 @@ import (
 )
 
 type WheelService struct {
-	items []string
-	mux   sync.Mutex
+	lastWinner string
+	items      []string
+	mux        sync.Mutex
 }
 
 func NewWheelService() *WheelService {
@@ -52,6 +53,7 @@ func (ws *WheelService) ResetItems(w http.ResponseWriter, r *http.Request) {
 	ws.mux.Lock()
 	defer ws.mux.Unlock()
 	ws.items = []string{}
+	ws.lastWinner = ""
 	log.Println("Reset all items")
 	w.WriteHeader(http.StatusOK)
 }
@@ -70,12 +72,40 @@ func (ws *WheelService) SpinWheel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	winner := ws.items[rand.Intn(len(ws.items))]
-	log.Printf("Wheel spun. Winner: %s", winner)
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	index := rng.Intn(len(ws.items))
+	ws.lastWinner = ws.items[index]
+	log.Printf("Wheel spun. Winner: %s", ws.lastWinner)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"winner": winner})
+	json.NewEncoder(w).Encode(map[string]interface{}{"winner": ws.lastWinner, "index": index})
+}
+
+func (ws *WheelService) RemoveLastWinner(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ws.mux.Lock()
+	defer ws.mux.Unlock()
+
+	if ws.lastWinner == "" {
+		http.Error(w, "No winner to remove", http.StatusBadRequest)
+		return
+	}
+
+	newItems := []string{}
+	for _, item := range ws.items {
+		if item != ws.lastWinner {
+			newItems = append(newItems, item)
+		}
+	}
+
+	ws.items = newItems
+	log.Printf("Removed last winner: %s", ws.lastWinner)
+	ws.lastWinner = ""
+	w.WriteHeader(http.StatusOK)
 }
 
 func (ws *WheelService) ServeHTML(w http.ResponseWriter, r *http.Request) {
@@ -95,6 +125,7 @@ func main() {
 	http.HandleFunc("/add", service.AddItem)
 	http.HandleFunc("/reset", service.ResetItems)
 	http.HandleFunc("/spin", service.SpinWheel)
+	http.HandleFunc("/remove-winner", service.RemoveLastWinner)
 
 	staticDir := http.Dir("static")
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(staticDir)))
