@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type WheelService struct {
@@ -119,6 +121,23 @@ func (ws *WheelService) ServeHTML(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Загружаем переменные из .env
+	if err := godotenv.Load(); err != nil {
+		log.Println("Не удалось загрузить файл .env, будут использованы стандартные значения")
+	}
+
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = "0.0.0.0" // Значение по умолчанию
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Значение по умолчанию
+	}
+
+	address := host + ":" + port
+
 	service := NewWheelService()
 
 	http.HandleFunc("/", service.ServeHTML)
@@ -130,8 +149,8 @@ func main() {
 	staticDir := http.Dir("static")
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(staticDir)))
 
-	log.Println("Server started at http://localhost:8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	log.Printf("Server started at http://%s", address)
+	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
