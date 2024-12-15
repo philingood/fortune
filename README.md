@@ -1,5 +1,3 @@
-Пример README.md для проекта
-
 # Telegram Bot и Сайт на Go
 
 Этот проект включает два сервиса: Telegram-бота и веб-сайт. Оба сервиса написаны на Go, используют Docker и могут быть запущены локально или удаленно с использованием Docker Compose.
@@ -69,17 +67,21 @@ SITE_PORT=8080      # Порт для сайта
 
 1. Установите зависимости и запустите бота:
 
+```bash
 cd bot/
 go mod tidy
 go run main.go
+``` 
 
 2. Установите зависимости и запустите сайт:
 
+```bash
 cd site/
 go mod tidy
 go run main.go
+```
 
-По умолчанию сайт будет доступен на http://localhost:8080.
+По умолчанию сайт будет доступен на `http://localhost:8080`.
 
 ### С использованием Docker Compose
 
@@ -91,7 +93,7 @@ docker-compose up --build -d
 
 2. Откройте:
  • Telegram-бот: Работает через Telegram API (вы должны добавить токен бота в .env).
- • Сайт: Доступен на http://localhost:8080 или по порту, указанному в .env.
+ • Сайт: Доступен на `http://localhost:8080` или по порту, указанному в .env.
 
 3. Остановка всех контейнеров:
 
@@ -112,7 +114,9 @@ POST /remove-winner Удаляет последнего победителя.
 
 Пример запроса для добавления элемента:
 
+```bash
 curl -X POST -H "Content-Type: application/json" -d '{"text": "Пример элемента"}' http://localhost:8080/add
+```
 
 ## Дополнительно
 
@@ -130,22 +134,30 @@ TELEGRAM_BOT_TOKEN=ваш_токен
 
 Для просмотра логов:
 
+```bash
 docker logs <имя_контейнера>
+```
 
 Например:
 
+```bash
 docker logs project_bot_1
+```
 
 Удаленный запуск (на сервере)
 
 1. Скопируйте проект на сервер:
 
+```bash
 scp -r project/ user@your-server:/path/to/project
+```
 
 2. Выполните сборку и запуск:
 
+```bash
 cd /path/to/project
 docker-compose up --build -d
+```
 
 3. Убедитесь, что порты 8080 (или указанный в .env) открыты для внешнего доступа. Используйте ufw или настройки файервола.
 
